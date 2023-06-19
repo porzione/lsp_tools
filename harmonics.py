@@ -59,16 +59,18 @@ def __main__():
         else:
             print(f'f_{i+1} = {c_freq}')
             c_q = 5.0
+            c_fm = 0
             if c_freq == freq:
                 gain = 0
                 filt = 8
                 c_q = 0
                 slope = 0
             elif c_freq < freq:
-                gain = -4.0
+                gain = 0.0
                 filt = 2
-                c_q = 0.5
+                c_q = 0.0
                 slope = 1
+                c_fm = 4
             else:
                 gain = args.eq_gain
                 filt = 1
@@ -78,6 +80,7 @@ def __main__():
             print(f'ft_{i+1} = {filt}')
             print(f'q_{i+1} = {c_q}')
             print(f's_{i+1} = {slope}')
+            print(f'fm_{i+1} = {c_fm}')
 
 if __name__ == '__main__':
     __main__()
