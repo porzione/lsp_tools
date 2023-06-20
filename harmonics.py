@@ -10,8 +10,11 @@ import re
 import notes
 
 HARM_NUM = 6
-EQ_GAIN = 2.0
-EQ_Q = 16
+EQ_GAIN = 0.0
+EQ_Q = 18
+
+FILT = {'off': 0, 'bell': 1, 'hi-pass': 2, 'hi-shelf': 3, 'lo-pass': 4,
+        'lo-shelf': 5, 'notch': 6, 'resonance': 7, 'allpass': 8}
 
 def t_note(value):
     """
@@ -30,19 +33,31 @@ def t_note(value):
 
     return note, octave, f_freq * (octave + 1)
 
-def __main__():
+def parse_args():
+    """ argparse """
     argp = ArgumentParser()
     argp.add_argument("-n", dest="note", required=True, type=t_note,
                       help="Note, e.g. G1")
     argp.add_argument("--hn", dest="harm_num", type=int, default=HARM_NUM,
-                      help="Number of harmonics (default: %(default)s)")
+                      help="Number of harmonic/bandss (default: %(default)s)")
     argp.add_argument("--gain", dest="eq_gain", type=float, default=EQ_GAIN,
-                      help="EQ gain (default: %(default)s)")
+                      help="EQ gain, db (default: %(default)s)")
     argp.add_argument("--eqq", dest="eq_q", type=float, default=EQ_Q,
                       help="EQ Q (default: %(default)s)")
+    argp.add_argument("--filter", dest="filter_s", type=str, default='bell',
+                      help="Filter type (default: %(default)s), "
+                           f"one of: {','.join(FILT.keys())}")
     argp.add_argument("-f", action='store_true', dest="only_freq",
                       help="Print only frequency")
     args = argp.parse_args()
+    if args.filter_s in FILT:
+        args.filter = FILT[args.filter_s]
+        return args
+
+    raise ArgumentTypeError('Invalid filter')
+
+def __main__():
+    args = parse_args()
     note, octave, freq = args.note
     print(f'# {note}{octave}, frequency: {freq}')
     nth_harmonic = 1
@@ -58,24 +73,24 @@ def __main__():
                 nth_harmonic += 1
         else:
             print(f'f_{i+1} = {c_freq}')
-            c_q = 5.0
-            c_fm = 0
+            c_q = 5.0  # Q
+            c_fm = 0   # filter mode
+            slope = 0
             if c_freq == freq:
-                gain = 0
-                filt = 8
+                gain = 0.0
+                filt = FILT['allpass']
                 c_q = 0
-                slope = 0
             elif c_freq < freq:
                 gain = 0.0
-                filt = 2
+                filt = FILT['hi-pass']
                 c_q = 0.0
                 slope = 1
                 c_fm = 4
             else:
                 gain = args.eq_gain
-                filt = 1
+                filt = args.filter
                 c_q = args.eq_q
-                slope = 0
+
             print(f'g_{i+1} = {gain} db')
             print(f'ft_{i+1} = {filt}')
             print(f'q_{i+1} = {c_q}')
